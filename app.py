@@ -53,16 +53,20 @@ aba_conteudo, aba_avaliacao, aba_certificacao = st.tabs([
 
 # --- ABA 1: CONTEÚDO DIDÁTICO ---
 with aba_conteudo:
-    st.subheader("1. Videoaula Oficial / Didática")
-    st.video(treinamento["video_url"])
+    st.subheader("1. Instrução Técnica Audiovisual")
+    st.info(f"📺 **Treinamento Audiovisual Disponível:** Clique abaixo para assistir à aula oficial e didática recomendada para o módulo de **{nr_selecionada}**.")
+    st.link_button(f"▶️ Assistir Videoaula Oficial ({nr_selecionada}) no YouTube", treinamento["video_url"], type="primary")
     
-    st.subheader("2. Conteúdo Programático Formal")
-    st.info(treinamento["ementa"])
+    st.markdown("---")
+    st.subheader("2. Ementa e Diretrizes Técnicas Formais")
+    st.success(treinamento["ementa"])
     
-    st.subheader("3. Diretrizes de Conclusão")
-    st.write("""
-    Para obter a certificação em conformidade com a NR-01, assista atentamente à instrução audiovisual, 
-    revise o conteúdo programático descrito e complete a avaliação de aprendizagem com aproveitamento mínimo de 70%.
+    st.markdown("---")
+    st.subheader("3. Instruções Obrigatórias (NR-01 - Anexo II)")
+    st.markdown("""
+    * **Rastreabilidade Pedagógica:** A conclusão desta capacitação requer a fixação dos conceitos técnicos apresentados na videoaula e na ementa descrita acima.
+    * **Critério de Certificação:** Dirija-se à aba **'Avaliação Obrigatória'** e alcance aproveitamento igual ou superior a **70%**.
+    * **Emissão:** O certificado com assinatura técnica do Engenheiro de Segurança será gerado automaticamente na aba seguinte após a aprovação.
     """)
 
 # --- ABA 2: AVALIAÇÃO OBRIGATÓRIA ---
