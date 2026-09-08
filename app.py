@@ -10,9 +10,20 @@ st.set_page_config(
     layout="wide"
 )
 
-# Barra Lateral - Identificação do Aluno e Responsável Técnico
-st.sidebar.image("https://img.icons8.com/color/96/safety-shield.png", width=70)
-st.sidebar.title("Portal SST Treinamentos")
+# Estilização visual customizada
+st.markdown("""
+<style>
+    .metric-card {
+        background-color: #F8FAFC;
+        border: 1px solid #E2E8F0;
+        padding: 20px;
+        border-radius: 10px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Barra Lateral - Identificação Legal e Configurações
+st.sidebar.markdown("## 🛡️ SST Capacita")
 st.sidebar.caption("Conforme NR-01 (Anexo II - EAD)")
 
 st.sidebar.markdown("---")
@@ -25,7 +36,7 @@ st.sidebar.subheader("Dados do Responsável Técnico")
 resp_tecnico = st.sidebar.text_input("Engenheiro / Instrutor:", value="Daniel Martins")
 registro_prof = st.sidebar.text_input("Registro Profissional:", value="CREA/SST Especialista")
 
-# Seleção da Norma
+# Seleção da Norma Regulamentadora
 nr_selecionada = st.sidebar.selectbox("Selecione o Treinamento Normativo:", list(CATALOGO_NRS.keys()))
 treinamento = CATALOGO_NRS[nr_selecionada]
 
@@ -33,14 +44,14 @@ treinamento = CATALOGO_NRS[nr_selecionada]
 st.title(f"🎓 {nr_selecionada} — {treinamento['titulo']}")
 st.write(f"**Carga Horária Regulamentar:** {treinamento['carga_horaria']}")
 
-# Abas de Acesso
+# Abas de Navegação
 aba_conteudo, aba_avaliacao, aba_certificacao = st.tabs([
     "📖 Conteúdo Didático & Videoaula",
     "📝 Avaliação Obrigatória",
     "🎓 Emissão de Certificado"
 ])
 
-# --- ABA 1: CONTEÚDO ---
+# --- ABA 1: CONTEÚDO DIDÁTICO ---
 with aba_conteudo:
     st.subheader("1. Videoaula Oficial / Didática")
     st.video(treinamento["video_url"])
@@ -48,13 +59,13 @@ with aba_conteudo:
     st.subheader("2. Conteúdo Programático Formal")
     st.info(treinamento["ementa"])
     
-    st.subheader("3. Material de Apoio e Leitura")
+    st.subheader("3. Diretrizes de Conclusão")
     st.write("""
-    A realização completa deste módulo requer a visualização atenta da instrução em vídeo, 
-    a leitura atenta das diretrizes de controle de riscos e a posterior realização do teste de fixação.
+    Para obter a certificação em conformidade com a NR-01, assista atentamente à instrução audiovisual, 
+    revise o conteúdo programático descrito e complete a avaliação de aprendizagem com aproveitamento mínimo de 70%.
     """)
 
-# --- ABA 2: AVALIAÇÃO ---
+# --- ABA 2: AVALIAÇÃO OBRIGATÓRIA ---
 with aba_avaliacao:
     st.subheader("Avaliação de Aprendizagem (Exigência NR-01)")
     st.caption("Nota mínima exigida para aprovação: 70%")
@@ -75,7 +86,9 @@ with aba_avaliacao:
 
     if btn_enviar_prova:
         if not aluno_nome or not aluno_cpf:
-            st.error("⚠️ Preencha seu Nome e CPF no menu lateral antes de concluir a avaliação.")
+            st.error("⚠️ Preencha seu Nome Completo e CPF na barra lateral antes de submeter a avaliação.")
+        elif any(respostas_usuario[i] is None for i in range(len(treinamento["questoes"]))):
+            st.warning("⚠️ Por favor, responda a todas as questões antes de finalizar a prova.")
         else:
             acertos = 0
             total = len(treinamento["questoes"])
@@ -85,20 +98,25 @@ with aba_avaliacao:
             
             nota_percentual = int((acertos / total) * 100)
             st.session_state["aproveitamento"] = nota_percentual
-            st.session_state["prova_feita"] = True
+            st.session_state["curso_aprovado"] = nr_selecionada
             
             if nota_percentual >= 70:
                 st.success(f"🎉 Parabéns! Você foi aprovado com aproveitamento de {nota_percentual}%.")
-                st.info("Acesse a aba **Emissão de Certificado** para obter seu documento legal.")
+                st.info("Acesse a aba **Emissão de Certificado** para fazer o download do documento oficial.")
             else:
-                st.error(f"Aproveitamento obtido: {nota_percentual}%. A aprovação exige no mínimo 70%. Revise o conteúdo e refaça a avaliação.")
+                st.error(f"Aproveitamento obtido: {nota_percentual}%. A aprovação regulamentar exige no mínimo 70%. Revise o conteúdo didático e tente novamente.")
 
 # --- ABA 3: CERTIFICAÇÃO ---
 with aba_certificacao:
-    st.subheader("Emissão de Certificado")
+    st.subheader("Emissão de Certificado de Conclusão")
     
-    if "aproveitamento" in st.session_state and st.session_state["aproveitamento"] >= 70:
-        st.success("Requisitos pedagógicos e regulamentares atendidos.")
+    aprovado_neste_curso = (
+        st.session_state.get("curso_aprovado") == nr_selecionada and 
+        st.session_state.get("aproveitamento", 0) >= 70
+    )
+    
+    if aprovado_neste_curso:
+        st.success(f"Conformidade confirmada para {nr_selecionada}! Requisitos pedagógicos e avaliativos atendidos.")
         
         dados_cert = {
             "aluno_nome": aluno_nome,
@@ -115,7 +133,7 @@ with aba_certificacao:
         
         pdf_bytes = gerar_certificado_pdf(dados_cert)
         
-        cpf_limpo = aluno_cpf.replace('.', '').replace('-', '') if aluno_cpf else "000"
+        cpf_limpo = aluno_cpf.replace('.', '').replace('-', '').strip() if aluno_cpf else "000"
         st.download_button(
             label="📜 Baixar Certificado Oficial (PDF)",
             data=pdf_bytes,
@@ -123,4 +141,4 @@ with aba_certificacao:
             mime="application/pdf"
         )
     else:
-        st.warning("O certificado será liberado após a conclusão e aprovação na aba 'Avaliação Obrigatória'.")
+        st.warning(f"O certificado para {nr_selecionada} estará disponível assim que a avaliação de aprendizagem for concluída com nota igual ou superior a 70%.")
